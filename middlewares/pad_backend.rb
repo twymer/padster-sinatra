@@ -1,4 +1,5 @@
 require 'faye/websocket'
+require 'json'
 
 module Padster
   class PadBackend
@@ -7,6 +8,7 @@ module Padster
     def initialize(app)
       @app = app
       @clients = []
+      @usernames = {}
     end
 
     def call(env)
@@ -16,16 +18,25 @@ module Padster
         ws.on :open do |event|
           p [:open, ws.object_id]
           @clients << ws
+          @usernames[ws.object_id] = ''
         end
 
         ws.on :message do |event|
           p [:message, event.data]
+          event_data = JSON.load(event.data)
+
+          # update usernames
+          @usernames[ws.object_id] = event_data['username']
+          @clients.each {|client| client.send({usernames: @usernames.values()}.to_json)}
+
+          # pass event to all clients
           @clients.each {|client| client.send(event.data)}
         end
 
         ws.on :close do |event|
           p [:close, ws.object_id, event.code, event.reason]
           @clients.delete(ws)
+          @usernames.delete(ws.object_id)
           ws = nil
         end
 
