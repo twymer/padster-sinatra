@@ -27,10 +27,18 @@ module Padster
 
           # update usernames
           @usernames[ws.object_id] = event_data['username']
-          @clients.each {|client| client.send({usernames: @usernames.values()}.to_json)}
+          @clients.each do |client|
+            unless client == event.target
+              client.send({usernames: @usernames.values()}.to_json)
+            end
+          end
 
           # pass event to all clients
-          @clients.each {|client| client.send(event.data)}
+          @clients.each do |client|
+            unless client == event.target
+              client.send(event.data)
+            end
+          end
         end
 
         ws.on :close do |event|
