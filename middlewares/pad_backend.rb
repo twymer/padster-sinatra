@@ -9,6 +9,7 @@ module Padster
       @app = app
       @clients = []
       @usernames = {}
+      @pad_text = ''
     end
 
     def call(env)
@@ -18,25 +19,30 @@ module Padster
         ws.on :open do |event|
           p [:open, ws.object_id]
           @clients << ws
-          @usernames[ws.object_id] = ''
+          @usernames[ws.object_id] = 'stranger danger'
+          ws.send(({
+            usernames: @usernames.values(),
+            text: @pad_text
+          }.to_json))
         end
 
         ws.on :message do |event|
           p [:message, event.data]
           event_data = JSON.load(event.data)
 
-          # update usernames
-          @usernames[ws.object_id] = event_data['username']
-          @clients.each do |client|
-            unless client == event.target
+          if event_data['action'] == 'name_change'
+            # update usernames
+            @usernames[ws.object_id] = event_data['username']
+            @clients.each do |client|
               client.send({usernames: @usernames.values()}.to_json)
             end
-          end
-
-          # pass event to all clients
-          @clients.each do |client|
-            unless client == event.target
-              client.send(event.data)
+          elsif event_data['action'] == 'text_change'
+            @pad_text = event_data['text']
+            # pass event to all clients
+            @clients.each do |client|
+              unless client == ws
+                client.send(event.data)
+              end
             end
           end
         end
