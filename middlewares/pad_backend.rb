@@ -21,7 +21,9 @@ module Padster
       # by client message
 
       # to_s calls make sure nil's are treated as empty strings
-      @pad_text[0...start].to_s + diff + @pad_text[start + length_replaced + 1..-1].to_s
+      prefix = @pad_text[0...start].to_s
+      postfix = @pad_text[start + length_replaced..-1].to_s
+      prefix + diff + postfix
     end
 
     def call(env)

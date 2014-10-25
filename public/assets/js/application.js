@@ -17,14 +17,6 @@ ws.onmessage = function (message) {
   }
 };
 
-sortStringLengthsInOrder = function (string1, string2) {
-  if (string1.length > string2.length) {
-    return [string2.length, string1.length];
-  } else {
-    return [string1.length, string2.length];
-  }
-}
-
 calculateDiff = function (newText, oldText) {
   // iterate from start and end of strings to find the range
   // that has been edited. currently only supports adding text.
@@ -36,9 +28,9 @@ calculateDiff = function (newText, oldText) {
 
   var start = endOffset = null;
 
-  stringLengthsInOrder = sortStringLengthsInOrder(newText, oldText);
+  var longestString = newText.length > oldText.length ? newText.length : oldText.length
 
-  for (var i = 0; i < stringLengthsInOrder[1]; i++) {
+  for (var i = 0; i < longestString; i++) {
     if (start == null && newText[i] !== oldText[i]) {
       start = i;
     }
@@ -47,14 +39,10 @@ calculateDiff = function (newText, oldText) {
     }
   }
 
-  console.log(endOffset);
-
-  // TODO this is currently not picking up replacements correctly
-  // if new string is shorter than old string...
   return {
     'start': start,
-    'lengthReplaced': stringLengthsInOrder[0] - endOffset - start + 1,
-    'lengthAdded': stringLengthsInOrder[1] - endOffset - start + 1,
+    'lengthReplaced': oldText.length - endOffset - start + 1,
+    'lengthAdded': newText.length - endOffset - start + 1,
     'diff': newText.slice(start, newText.length - endOffset + 1)
   };
 }
