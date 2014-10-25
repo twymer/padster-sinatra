@@ -12,6 +12,13 @@ module Padster
       @pad_text = ''
     end
 
+    def update_text_from_diff(start, length, diff)
+      # rebuild stored string from diff sent back
+      # by client message
+
+      @pad_text.insert(start, diff)
+    end
+
     def call(env)
       if Faye::WebSocket.websocket?(env)
         ws = Faye::WebSocket.new(env, nil, {ping: KEEPALIVE_TIME })
@@ -20,10 +27,10 @@ module Padster
           p [:open, ws.object_id]
           @clients << ws
           @usernames[ws.object_id] = 'stranger danger'
-          ws.send(({
+          ws.send({
             usernames: @usernames.values(),
             text: @pad_text
-          }.to_json))
+          }.to_json)
         end
 
         ws.on :message do |event|
@@ -37,11 +44,22 @@ module Padster
               client.send({usernames: @usernames.values()}.to_json)
             end
           elsif event_data['action'] == 'text_change'
-            @pad_text = event_data['text']
-            # pass event to all clients
+            update_text_from_diff(
+              event_data['start'],
+              event_data['length'], # length is not yet used for anything
+              event_data['diff']
+            )
+
+            p [:pad_text, @pad_text]
+
+            # for now we just force update connected
+            # clients text, eventually we should let them
+            # rebuild the file
             @clients.each do |client|
               unless client == ws
-                client.send(event.data)
+                client.send({
+                  text: @pad_text
+                }.to_json)
               end
             end
           end
