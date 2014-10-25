@@ -2,5 +2,12 @@ source "http://rubygems.org"
 
 gem 'sinatra'
 gem 'faye-websocket'
-gem 'thin'
 gem 'pry'
+
+group :development do
+  gem 'thin'
+end
+
+group :production do
+  gem 'puma'
+end

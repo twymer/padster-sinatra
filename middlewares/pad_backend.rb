@@ -1,7 +1,9 @@
 require 'faye/websocket'
 require 'json'
 
-Faye::WebSocket.load_adapter('thin')
+unless ENV['RACK_ENV'] == 'production'
+  Faye::WebSocket.load_adapter('thin')
+end
 
 module Padster
   class PadBackend
