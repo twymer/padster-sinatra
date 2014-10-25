@@ -17,8 +17,12 @@ ws.onmessage = function (message) {
   }
 };
 
-biggestStrLength = function (string1, string2) {
-  return string1.length > string2.length ? string1.length : string2.length
+sortStringLengthsInOrder = function (string1, string2) {
+  if (string1.length > string2.length) {
+    return [string2.length, string1.length];
+  } else {
+    return [string1.length, string2.length];
+  }
 }
 
 calculateDiff = function (newText, oldText) {
@@ -30,21 +34,28 @@ calculateDiff = function (newText, oldText) {
     return null;
   }
 
-  var start = end = null;
-  var longestTextLength = biggestStrLength(newText, oldText);
-  for (var i = 0; i < longestTextLength; i++) {
+  var start = endOffset = null;
+
+  stringLengthsInOrder = sortStringLengthsInOrder(newText, oldText);
+
+  for (var i = 0; i < stringLengthsInOrder[1]; i++) {
     if (start == null && newText[i] !== oldText[i]) {
       start = i;
     }
-    if (end == null && newText[newText.length - i] !== oldText[oldText.length - i]) {
-      end = newText.length - i + 1;
+    if (endOffset == null && newText[newText.length - i] !== oldText[oldText.length - i]) {
+      endOffset = i;
     }
   }
 
+  console.log(endOffset);
+
+  // TODO this is currently not picking up replacements correctly
+  // if new string is shorter than old string...
   return {
     'start': start,
-    'length': end - start,
-    'diff': newText.slice(start, end)
+    'lengthReplaced': stringLengthsInOrder[0] - endOffset - start + 1,
+    'lengthAdded': stringLengthsInOrder[1] - endOffset - start + 1,
+    'diff': newText.slice(start, newText.length - endOffset + 1)
   };
 }
 
@@ -61,7 +72,8 @@ $("#input-text").on("change keyup paste", function () {
       action: "text_change",
       username: nameBox.value,
       start: diffResults['start'],
-      length: diffResults['length'],
+      lengthReplaced: diffResults['lengthReplaced'],
+      lengthAdded: diffResults['lengthAdded'],
       diff: diffResults['diff']
     }));
   }

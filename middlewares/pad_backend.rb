@@ -16,11 +16,12 @@ module Padster
       @pad_text = ''
     end
 
-    def update_text_from_diff(start, length, diff)
+    def rebuild_text_from_diff(start, length_replaced, length_added, diff)
       # rebuild stored string from diff sent back
       # by client message
 
-      @pad_text.insert(start, diff)
+      # to_s calls make sure nil's are treated as empty strings
+      @pad_text[0...start].to_s + diff + @pad_text[start + length_replaced + 1..-1].to_s
     end
 
     def call(env)
@@ -48,9 +49,10 @@ module Padster
               client.send({usernames: @usernames.values()}.to_json)
             end
           elsif event_data['action'] == 'text_change'
-            update_text_from_diff(
+            @pad_text = rebuild_text_from_diff(
               event_data['start'],
-              event_data['length'], # length is not yet used for anything
+              event_data['lengthReplaced'],
+              event_data['lengthAdded'],
               event_data['diff']
             )
 
