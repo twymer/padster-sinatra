@@ -1,6 +1,8 @@
 require 'faye/websocket'
 require 'json'
 
+Faye::WebSocket.load_adapter('thin')
+
 module Padster
   class PadBackend
     KEEPALIVE_TIME = 15
